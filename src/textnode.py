@@ -1,6 +1,7 @@
 from enum import Enum
 from htmlnode import LeafNode
 
+
 class TextType(Enum):
 
     TEXT = "plain text"
@@ -38,3 +39,7 @@ def text_node_to_html_node(text_node):
     else:
         raise Exception("text node must have a text type")
     return leafnode
+
+
+
+
