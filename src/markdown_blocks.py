@@ -1,10 +1,22 @@
 from enum import Enum
-from htmlnode import HTMLNode
+from htmlnode import ParentNode
+from inline_markdown import text_to_textnodes
+from textnode import text_node_to_html_node, TextNode, TextType
 
-# converts a block of markdown text into 1 line blocks
+# converts a block of markdown text into a list of 1 line blocks
 def markdown_to_blocks(markdown):
-    return [block.strip() for block in markdown.split("\n\n") if block.strip()]
+    blocks = markdown.split("\n\n")
+    filtered_blocks = []
+    for block in blocks:
+        lines = block.split("\n")
+        stripped_lines = [line.strip() for line in lines]
+        block = "\n".join(stripped_lines).strip()
+        if block == "":
+            continue
+        filtered_blocks.append(block)
+    return filtered_blocks
 
+# create an Enum for the block types
 class BlockType(Enum):
 
     PARAGRAPH = "paragraph"
@@ -30,25 +42,60 @@ def block_to_block_type(markdown_block):
         return BlockType.CODE
     return BlockType.PARAGRAPH
 
-# uses the block to block type tool to get find out the block type of a block
-def get_block_type(blocks):
+#creates child nodes for the 
+def text_to_children(text):
+    text_nodes = text_to_textnodes(text)
+    html_nodes = []
+    for text_node in text_nodes:
+        html_nodes.append(text_node_to_html_node(text_node))
+    return html_nodes
+
+def markdown_to_html_node(markdown):
+    blocks = markdown_to_blocks(markdown)
+    children = []
     for block in blocks:
         block_type = block_to_block_type(block)
-    return block, block_type
+        if block_type == BlockType.HEADING:
+            tag_count = block.split()[0].count("#")
+            node = ParentNode(f"h{tag_count}", text_to_children(block[tag_count+1:]))
+            children.append(node)
+        elif block_type == BlockType.PARAGRAPH:
+            lines = block.split("\n")
+            cleaned_lines = [line.strip(" ") for line in lines]
+            join_block = " ".join(cleaned_lines)
+            node = ParentNode("p", text_to_children(join_block))
+            children.append(node)
+        elif block_type == BlockType.CODE:
+            clean_block = block[3:-3].lstrip("\n")
+            text_node = TextNode(clean_block, TextType.CODE)
+            code_node = text_node_to_html_node(text_node)
+            node = ParentNode("pre", [code_node])
+            children.append(node)
+        elif block_type == BlockType.QUOTE:
+            lines = block.split("\n")
+            cleaned_lines = [line.lstrip("> ") for line in lines]
+            joined = " ".join(cleaned_lines)
+            node = ParentNode("blockquote", text_to_children(joined))
+            children.append(node)
+        elif block_type == BlockType.UNORDEREDLIST:
+            lines = block.split("\n")
+            inline_parents = []
+            for line in lines:
+                clean_line = line[2:]
+                inline_children = text_to_children(clean_line)
+                inline_parent = ParentNode("li", inline_children)
+                inline_parents.append(inline_parent)
+            node = ParentNode("ul", inline_parents)
+            children.append(node)
+        elif block_type == BlockType.ORDEREDLIST:
+            lines = block.split("\n")
+            inline_parents = []
+            for line in lines:
+                clean_line = line.split(". ", 1)[1]
+                inline_children = text_to_children(clean_line)
+                inline_parent = ParentNode("li", inline_children)
+                inline_parents.append(inline_parent)
+            node = ParentNode("ol", inline_parents)
+            children.append(node)
 
-# determines which header count the given header is
-def header(block):
-    return (block[0].stringcount("#"))
-
-# creats an html node with the right tag for the block type
-# incomplete
-def block_to_html_node(block_type, block):
-    if block_type == BlockType.HEADING:
-        return HTMLNode(f"<h{header(block)}>")
-    elif block_type == BlockType.QUOTE:
-        return HTMLNode("<blockquote>")
-
-# incomplete
-def markdown_to_html_node(markdown):
-    pass
-
+    return ParentNode("div", children)
