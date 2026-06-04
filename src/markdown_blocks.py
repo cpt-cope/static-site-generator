@@ -29,14 +29,15 @@ class BlockType(Enum):
 # used to determine what the blocktype of each block should be
 def block_to_block_type(markdown_block):
     words = markdown_block.split()
+    lines = markdown_block.split("\n")
     first_word = words[0]
     if first_word.startswith("#") and len(first_word) <= 6 and all(c == '#' for c in first_word):
         return BlockType.HEADING
     elif first_word[:-1].isdigit() and first_word.endswith("."):
         return BlockType.ORDEREDLIST
-    elif first_word == "-":
+    elif all(line.startswith("- ") for line in lines):
         return BlockType.UNORDEREDLIST
-    elif first_word == ">":
+    elif all(line.startswith(">") for line in lines):
         return BlockType.QUOTE
     elif markdown_block.startswith("```") and markdown_block.endswith("```"):
         return BlockType.CODE

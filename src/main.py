@@ -1,11 +1,14 @@
-from textnode import TextNode, TextType
-from htmlnode import HTMLNode, LeafNode, ParentNode
+from gencontent import copy_static, generate_page, generate_pages_recursive
 
+content_dir = "content"
+template_file = "template.html"
+public_dir = "public"
 
 def main():
-    node = TextNode("test text", TextType.LINK, "https://www.boot.dev")
-    print(node)
+    copy_static()
+    generate_pages_recursive(content_dir, template_file, public_dir)
 
-main()
+if __name__ == "__main__":
+    main()
 
 
