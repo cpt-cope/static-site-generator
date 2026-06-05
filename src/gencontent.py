@@ -26,7 +26,7 @@ def extract_title(markdown):
             return block.lstrip("#").strip()
     raise Exception("No Header")
 
-def generate_page(from_path, template_path, dest_path):
+def generate_page(from_path, template_path, dest_path, basepath):
     print(f"Generating page from {from_path} to {dest_path} using {template_path}")
     with open(from_path) as file:
         markdown = file.read()
@@ -37,21 +37,23 @@ def generate_page(from_path, template_path, dest_path):
     title = extract_title(markdown)
     page = template.replace("{{ Title }}", title)
     page = page.replace("{{ Content }}", html_string)
+    page = page.replace('href="/', f'href="{basepath}')
+    page = page.replace('src="/', f'src="{basepath}')
     directory = os.path.dirname(dest_path)
     if directory != "":
         os.makedirs(directory, exist_ok=True)
     with open(dest_path, "w") as file:
         file.write(page)
 
-def generate_pages_recursive(dir_path_content, template_path, dest_dir_path):
+def generate_pages_recursive(dir_path_content, template_path, dest_dir_path, basepath):
     entries = os.listdir(dir_path_content)
     for entry in entries:
         source_path = os.path.join(dir_path_content, entry)
         next_dest = os.path.join(dest_dir_path, entry)
         if os.path.isdir(source_path):
             os.makedirs(next_dest, exist_ok=True)
-            generate_pages_recursive(source_path, template_path, next_dest)
+            generate_pages_recursive(source_path, template_path, next_dest, basepath)
         elif source_path.endswith(".md"):
             html_dest = next_dest.replace(".md", ".html")
-            generate_page(source_path,template_path, html_dest)
+            generate_page(source_path, template_path, html_dest, basepath)
         
