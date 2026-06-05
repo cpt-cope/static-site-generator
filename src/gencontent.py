@@ -4,10 +4,10 @@ from markdown_blocks import markdown_to_blocks, markdown_to_html_node
 
 
 def copy_static():
-    if os.path.exists("public"):
-        shutil.rmtree("public")
-    os.mkdir("public")
-    recursive_copy("static", "public")
+    if os.path.exists("docs"):
+        shutil.rmtree("docs")
+    os.mkdir("docs")
+    recursive_copy("static", "docs")
 
 def recursive_copy(source_dir, dest_dir):
     for item in os.listdir(source_dir):
